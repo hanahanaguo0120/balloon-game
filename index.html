@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>氣球打氣互動小工具</title>
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f9ff;
+    font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+    user-select: none;
+    overflow: hidden;
+  }
+
+  #title-text {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #0369a1;
+    margin-bottom: 20px;
+    transition: all 0.3s;
+    text-align: center;
+  }
+
+  .stage-container {
+    width: 450px;
+    height: 450px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+
+  #balloon {
+    width: 90px;
+    height: 110px;
+    background: radial-gradient(circle at 35% 30%, #ff8a80, #e53935 70%);
+    border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+    cursor: pointer;
+    position: relative;
+    box-shadow: 0 10px 20px rgba(229, 57, 53, 0.25);
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  #balloon::before {
+    content: "";
+    position: absolute;
+    top: 15%;
+    left: 20%;
+    width: 25%;
+    height: 35%;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    transform: rotate(-30deg);
+  }
+
+  #balloon::after {
+    content: "";
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 10px solid #c62828;
+  }
+
+  .shake {
+    animation: shakeAnim 0.3s ease-in-out;
+  }
+
+  @keyframes shakeAnim {
+    0%, 100% { transform: scale(var(--scale)) rotate(0deg); }
+    25% { transform: scale(var(--scale)) rotate(-4deg); }
+    75% { transform: scale(var(--scale)) rotate(4deg); }
+  }
+
+  .pop-particle {
+    position: absolute;
+    background-color: #e53935;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: explode 0.6s ease-out forwards;
+  }
+
+  @keyframes explode {
+    0% { transform: translate(0, 0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+  }
+
+  .btn-container {
+    margin-top: 30px;
+    display: flex;
+    gap: 15px;
+  }
+
+  .btn {
+    font-size: 1.3rem;
+    font-weight: bold;
+    padding: 12px 28px;
+    border-radius: 30px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: 0.2s;
+  }
+
+  .btn-pump {
+    background-color: #ffb703;
+    color: #78350f;
+  }
+
+  .btn-pump:active {
+    transform: scale(0.95);
+  }
+
+  .btn-reset {
+    background-color: #cbd5e1;
+    color: #334155;
+  }
+</style>
+</head>
+<body>
+
+<div id="title-text">點一下：稱讚「你好棒！」</div>
+
+<div class="stage-container" id="stage">
+  <div id="balloon" onclick="pumpBalloon()"></div>
+</div>
+
+<div class="btn-container">
+  <button class="btn btn-pump" onclick="pumpBalloon()">幫氣球打氣 🎈</button>
+  <button class="btn btn-reset" onclick="resetBalloon()">換新氣球 🔄</button>
+</div>
+
+<script>
+  let step = 0;
+  const scales = [1, 1.6, 2.3, 3.1, 3.8];
+  const praises = [
+    "點一下：稱讚「你好棒！」",
+    "「哇！你太聰明了！」（膨脹）",
+    "「簡直是全班第一名天才！」（繃緊）",
+    "「大家都比不上你！」（快破了…）",
+    "碰！氣球破掉了！"
+  ];
+
+  const balloon = document.getElementById("balloon");
+  const title = document.getElementById("title-text");
+  const stage = document.getElementById("stage");
+
+  function pumpBalloon() {
+    if (step >= scales.length - 1) return;
+
+    step++;
+    const currentScale = scales[step];
+    balloon.style.setProperty('--scale', currentScale);
+    balloon.style.transform = `scale(${currentScale})`;
+    
+    balloon.classList.remove("shake");
+    void balloon.offsetWidth;
+    balloon.classList.add("shake");
+
+    title.innerText = praises[step];
+
+    if (step === scales.length - 1) {
+      setTimeout(popBalloon, 200);
+    }
+  }
+
+  function popBalloon() {
+    balloon.style.display = "none";
+    title.innerText = praises[4];
+    title.style.color = "#d32f2f";
+
+    for (let i = 0; i < 20; i++) {
+      const p = document.createElement("div");
+      p.className = "pop-particle";
+      const size = Math.random() * 20 + 10;
+      p.style.width = size + "px";
+      p.style.height = size + "px";
+      
+      const angle = Math.random() * 2 * Math.PI;
+      const dist = Math.random() * 180 + 70;
+      p.style.setProperty('--tx', Math.cos(angle) * dist + "px");
+      p.style.setProperty('--ty', Math.sin(angle) * dist + "px");
+
+      stage.appendChild(p);
+      setTimeout(() => p.remove(), 600);
+    }
+  }
+
+  function resetBalloon() {
+    step = 0;
+    balloon.style.display = "block";
+    balloon.style.setProperty('--scale', 1);
+    balloon.style.transform = "scale(1)";
+    title.innerText = praises[0];
+    title.style.color = "#0369a1";
+  }
+</script>
+
+</body>
+</html>
